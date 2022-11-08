@@ -27,7 +27,7 @@ else {
 ```
 print("Foo");
 print("Foo is ", foo);
-print("Foo is ) + foo);
+print("Foo is " + foo);
 ```
 
 ## Functions:
