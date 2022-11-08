@@ -20,3 +20,9 @@ Along with the mentioned features, here are some more features which are notable
 - Memory safety guarantee (Transpiling to rust).
 - Automatic parallelisation of codeblocks.
 - Healing of errors.
+
+## Syntax
+
+Checkout [syntax.md](docs/syntax.md) for the syntax specification of the language.
+
+Note : The syntax is subject to change since the language is in a really early stage. 
