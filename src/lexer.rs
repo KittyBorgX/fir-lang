@@ -18,6 +18,7 @@ impl<'a> Lexer<'a> {
     pub fn new(inp: &'a str) -> Self {
         Self {
             tokenkind: TokenKind::lexer(inp).spanned().peekable(),
+            // TODO: Find a better way to represent initial token
             token: Token {
                 kind: TokenKind::Error,
                 span: 0..0,
@@ -51,5 +52,9 @@ impl<'a> Lexer<'a> {
 
     pub fn at(&mut self, kind: TokenKind) -> bool {
         self.peek() == kind
+    }
+
+    pub fn text(&self) -> &'a str {
+        &self.input[self.token.span.clone()]
     }
 }
