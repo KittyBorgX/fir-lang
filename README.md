@@ -23,6 +23,6 @@ Along with the mentioned features, here are some more features which are notable
 
 ## Syntax
 
-Checkout [syntax.md](docs/syntax.md) for the syntax specification of the language.
+Checkout [syntax.md](spec/syntax.md) for the syntax specification of the language.
 
 Note : The syntax is subject to change since the language is in a really early stage.
