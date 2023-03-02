@@ -1,60 +1,170 @@
-use std::iter::Peekable;
+use core::fmt;
+use logos::Logos;
 
-use logos::{Logos, Span, SpannedIter};
+#[derive(Logos, Debug, Clone, PartialEq, Copy)]
+pub enum TokenKind {
+    // Single character operators
+    #[token(".")]
+    Dot,
+    #[token(":")]
+    Colon,
+    #[token(",")]
+    Comma,
+    #[token(";")]
+    SemiColon,
+    #[token("^")]
+    Caret,
+    #[token("=")]
+    Eq,
+    #[token("_")]
+    Under,
+    // Binary Operators
+    #[token("+")]
+    Plus,
+    #[token("-")]
+    Minus,
+    #[token("*")]
+    Times,
+    #[token("/")]
+    Slash,
 
-use crate::tokens::TokenKind;
-struct Token {
-    kind: TokenKind,
-    span: Span,
+    // Logical Operators
+    #[token("&&")]
+    And,
+    #[token("||")]
+    Or,
+    #[token("!")]
+    Bang,
+
+    // Relational Operators
+    #[token("<")]
+    LAngle,
+    #[token(">")]
+    RAngle,
+    #[token("==")]
+    Eqq,
+    #[token("!=")]
+    #[token("<>")]
+    Neq,
+    #[token("<=")]
+    Leq,
+    #[token(">=")]
+    Geq,
+
+    // Brackets
+    #[token("(")]
+    LParen,
+    #[token(")")]
+    RParen,
+    #[token("[")]
+    LSquare,
+    #[token("]")]
+    RSquare,
+    #[token("{")]
+    LBrace,
+    #[token("}")]
+    RBrace,
+
+    // Literals
+    #[regex(r#""((\\"|\\\\)|[^\\"])*""#)]
+    String,
+
+    #[regex(r#"//[^\n]*\n"#, logos::skip)]
+    LineComment,
+
+    #[regex(r#"\d+"#, priority = 2)]
+    Int,
+
+    #[regex(r#"((\d+(\.\d+)?)|(\.\d+))([Ee](\+|-)?\d+)?"#)]
+    Float,
+
+    // Misc
+    #[regex(r#"[A-Za-z]([A-Za-z]|_|\d)*"#)]
+    Ident,
+
+    #[regex(r"[ \t\n\f]+", logos::skip)]
+    WhiteSpace,
+
+    // Keywords
+    #[token("let")]
+    KwLet,
+    #[token("if")]
+    KwIf,
+    #[token("else")]
+    KwElse,
+    #[token("fn")]
+    KwFn,
+
+    #[error]
+    Error,
+
+    EOF,
 }
 
-pub struct Lexer<'a> {
-    tokenkind: Peekable<SpannedIter<'a, TokenKind>>,
-    token: Token,
-    input: &'a str,
-}
+// TODO: Change the symbols to words for the error messages in the future:
+// Example: change TokenKind::Dot => "." to TokenKind::Dot => "dot"
 
-impl<'a> Lexer<'a> {
-    pub fn new(inp: &'a str) -> Self {
-        Self {
-            tokenkind: TokenKind::lexer(inp).spanned().peekable(),
-            // TODO: Find a better way to represent initial token
-            token: Token {
-                kind: TokenKind::Error,
-                span: 0..0,
-            },
-            input: inp,
-        }
-    }
+impl fmt::Display for TokenKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                // Single characters
+                TokenKind::Dot => ".",
+                TokenKind::Colon => ":",
+                TokenKind::Comma => ",",
+                TokenKind::SemiColon => ";",
+                TokenKind::Caret => "^",
+                TokenKind::Eq => "=",
+                TokenKind::Under => "_",
 
-    pub fn next(&mut self) -> TokenKind {
-        let (kind, span) = self
-            .tokenkind
-            .next()
-            .unwrap_or((TokenKind::EOF, self.input.len() - 1..self.input.len()));
-        self.token = Token { kind, span };
-        kind
-    }
+                // Binary ops
+                TokenKind::Plus => "+",
+                TokenKind::Minus => "-",
+                TokenKind::Times => "*",
+                TokenKind::Slash => "/",
 
-    pub fn peek(&mut self) -> TokenKind {
-        let (kind, span) = self
-            .tokenkind
-            .peek()
-            .cloned()
-            .unwrap_or((TokenKind::EOF, self.span()));
-        self.token = Token { kind: kind, span };
-        kind
-    }
+                // Logical ops
+                TokenKind::And => "&&",
+                TokenKind::Or => "||",
+                TokenKind::Bang => "!",
 
-    pub fn span(&self) -> Span {
-        self.token.span.clone()
-    }
+                // Relational ops
+                TokenKind::LAngle => "<",
+                TokenKind::RAngle => ">",
+                TokenKind::Eqq => "==",
+                TokenKind::Neq => "!=",
+                TokenKind::Geq => ">=",
+                TokenKind::Leq => "<=",
 
-    pub fn at(&mut self, kind: TokenKind) -> bool {
-        self.peek() == kind
-    }
+                // Brackets
+                TokenKind::LParen => "(",
+                TokenKind::RParen => ")",
+                TokenKind::LSquare => "[",
+                TokenKind::RSquare => "]",
+                TokenKind::LBrace => "{",
+                TokenKind::RBrace => "}",
 
-    pub fn text(&self) -> &'a str {
-        &self.input[self.token.span.clone()]
+                // Literals
+                TokenKind::String => "String",
+                TokenKind::LineComment => "comment",
+                TokenKind::Int => "an integer",
+                TokenKind::Float => "a floatinf point literal",
+
+                // Misc
+                TokenKind::Ident => "an identifier",
+                TokenKind::WhiteSpace => "<WS>",
+
+                // Keywords
+                TokenKind::KwLet => "let",
+                TokenKind::KwIf => "if",
+                TokenKind::KwElse => "else",
+                TokenKind::KwFn => "fn",
+
+                TokenKind::Error => "ERROR",
+                TokenKind::EOF => "<EOF>",
+            }
+        )
     }
 }
