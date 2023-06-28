@@ -54,7 +54,7 @@ impl<'a> Parser<'a> {
         &self.input[self.span()]
     }
 
-    pub fn consume<T>(&mut self, expected: TokenKind) -> Result<T, Error> {
+    pub fn consume(&mut self, expected: TokenKind) -> Result<(), Error> {
         let token = self.next().unwrap();
         if expected != token {
             let err = Error::new(
@@ -65,7 +65,7 @@ impl<'a> Parser<'a> {
             self.errors.push(err.clone());
             Err(err)
         } else {
-            Ok(T)
+            Ok(())
         }
     }
 

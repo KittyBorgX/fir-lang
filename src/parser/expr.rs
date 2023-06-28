@@ -1,14 +1,14 @@
-use crate::{ast, lexer::TokenKind};
+use crate::{ast, error::Error, lexer::TokenKind};
 
 use super::Parser;
 
 impl<'a> Parser<'a> {
     #[inline]
-    pub fn expression(&mut self) -> ast::Expr {
+    pub fn expression(&mut self) -> Result<ast::Expr, Error> {
         self.parse_expression(0)
     }
 
-    pub fn parse_expression(&mut self, binding_power: u8) -> ast::Expr {
+    pub fn parse_expression(&mut self, binding_power: u8) -> Result<ast::Expr, Error> {
         let mut lhs = match self.peek() {
             lit @ TokenKind::Int | lit @ TokenKind::Float | lit @ TokenKind::String => {
                 let literal_text = {
@@ -31,7 +31,7 @@ impl<'a> Parser<'a> {
                     }
                     _ => unreachable!(),
                 };
-                ast::Expr::Literal(lit)
+                Ok(ast::Expr::Literal(lit))
             }
             TokenKind::Ident => {
                 let name = {
@@ -40,41 +40,41 @@ impl<'a> Parser<'a> {
                 };
                 if !self.at(TokenKind::LParen) {
                     // plain identifier
-                    ast::Expr::Ident(name)
+                    Ok(ast::Expr::Ident(name))
                 } else {
                     //  function call
                     let mut args = Vec::new();
-                    self.consume::<ast::Expr>(TokenKind::LParen);
+                    self.consume(TokenKind::LParen);
                     while !self.at(TokenKind::RParen) {
                         let arg = self.parse_expression(0);
                         args.push(arg);
                         if self.at(TokenKind::Comma) {
-                            self.consume::<ast::Expr>(TokenKind::Comma);
+                            self.consume(TokenKind::Comma);
                         }
                     }
-                    self.consume::<ast::Expr>(TokenKind::RParen);
-                    ast::Expr::FnCall {
+                    self.consume(TokenKind::RParen);
+                    Ok(ast::Expr::FnCall {
                         fn_name: name,
                         args,
-                    }
+                    })
                 }
             }
             TokenKind::LParen => {
                 // There is no AST node for grouped expressions.
                 // Parentheses just influence the tree structure.
-                self.consume::<ast::Expr>(TokenKind::LParen);
+                self.consume(TokenKind::LParen);
                 let expr = self.parse_expression(0);
-                self.consume::<ast::Expr>(TokenKind::RParen);
+                self.consume(TokenKind::RParen);
                 expr
             }
             op @ TokenKind::Plus | op @ TokenKind::Minus | op @ TokenKind::Bang => {
-                self.consume::<ast::Expr>(op);
+                self.consume(op);
                 let ((), right_binding_power) = op.prefix_binding_power();
                 let expr = self.parse_expression(right_binding_power);
-                ast::Expr::PrefixOp {
+                Ok(ast::Expr::PrefixOp {
                     op,
                     expr: Box::new(expr),
-                }
+                })
             }
             kind => {
                 panic!("Unknown start of expression: `{}`", kind);
@@ -109,12 +109,12 @@ impl<'a> Parser<'a> {
                     break;
                 }
 
-                self.consume::<ast::Expr>(op);
+                self.consume(op);
                 // no recursive call here, because we have already parsed our operand `lhs`
-                lhs = ast::Expr::PostfixOp {
+                lhs = Ok(ast::Expr::PostfixOp {
                     op,
                     expr: Box::new(lhs),
-                };
+                });
                 // parsed an operator --> go round the loop again
                 continue;
             }
@@ -125,13 +125,13 @@ impl<'a> Parser<'a> {
                     break;
                 }
 
-                self.consume::<ast::Expr>(op);
+                self.consume(op)?;
                 let rhs = self.parse_expression(right_binding_power);
-                lhs = ast::Expr::InfixOp {
+                lhs = Ok(ast::Expr::InfixOp {
                     op,
                     lhs: Box::new(lhs),
                     rhs: Box::new(rhs),
-                };
+                });
                 // parsed an operator --> go round the loop again
                 continue;
             }

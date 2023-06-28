@@ -5,35 +5,34 @@ use crate::{error::Error, lexer::TokenKind};
 #[derive(Debug, Clone, PartialEq)]
 pub enum Item {
     Struct {
-        name: Type,
-        members: Vec<(String, Type)>,
+        name: Result<Type, Error>,
+        members: Vec<(String, Result<Type, Error>)>,
     },
     Function {
         name: String,
-        parameters: Vec<(String, Type)>,
+        parameters: Vec<(String, Result<Type, Error>)>,
         body: Vec<Result<Stmt, Error>>,
     },
-    Error(Error),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Type {
     pub name: String,
-    pub generics: Vec<Type>,
+    pub generics: Vec<Result<Type, Error>>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Stmt {
     Let {
         var_name: String,
-        value: Box<Expr>,
+        value: Box<Result<Expr, Error>>,
     },
     Assignment {
         var_name: String,
-        value: Box<Expr>,
+        value: Box<Result<Expr, Error>>,
     },
     IfStmt {
-        condition: Box<Expr>,
+        condition: Box<Result<Expr, Error>>,
         body: Vec<Result<Stmt, Error>>,
         else_stmt: Option<Box<Result<Stmt, Error>>>,
     },
@@ -51,20 +50,20 @@ pub enum Expr {
     Ident(String),
     FnCall {
         fn_name: String,
-        args: Vec<Expr>,
+        args: Vec<Result<Expr, Error>>,
     },
     PrefixOp {
         op: TokenKind,
-        expr: Box<Expr>,
+        expr: Box<Result<Expr, Error>>,
     },
     InfixOp {
         op: TokenKind,
-        lhs: Box<Expr>,
-        rhs: Box<Expr>,
+        lhs: Box<Result<Expr, Error>>,
+        rhs: Box<Result<Expr, Error>>,
     },
     PostfixOp {
         op: TokenKind,
-        expr: Box<Expr>,
+        expr: Box<Result<Expr, Error>>,
     },
 }
 
@@ -83,13 +82,13 @@ impl fmt::Display for Expr {
             Expr::FnCall { fn_name, args } => {
                 write!(f, "{}(", fn_name)?;
                 for arg in args {
-                    write!(f, "{},", arg)?;
+                    write!(f, "{:#?},", arg)?;
                 }
                 write!(f, ")")
             }
-            Expr::PrefixOp { op, expr } => write!(f, "({} {})", op, expr),
-            Expr::InfixOp { op, lhs, rhs } => write!(f, "({} {} {})", lhs, op, rhs),
-            Expr::PostfixOp { op, expr } => write!(f, "({} {})", expr, op),
+            Expr::PrefixOp { op, expr } => write!(f, "({:#?} {:#?})", op, expr),
+            Expr::InfixOp { op, lhs, rhs } => write!(f, "({:#?} {:#?} {:#?})", lhs, op, rhs),
+            Expr::PostfixOp { op, expr } => write!(f, "({:#?} {:#?})", expr, op),
         }
     }
 }
