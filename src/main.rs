@@ -17,7 +17,7 @@ fn main() {
     //     println!();
     // }
     let imp = "fn addasdasd(x: String, y: String) {
-        let 5 ! 5;
+        fn hi();
     }";
     println!("{:#?}", parser::Parser::parse(imp));
 }
