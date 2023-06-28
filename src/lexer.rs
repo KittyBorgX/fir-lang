@@ -88,12 +88,18 @@ pub enum TokenKind {
     // Keywords
     #[token("let")]
     KwLet,
+
     #[token("if")]
     KwIf,
+
     #[token("else")]
     KwElse,
+
     #[token("fn")]
     KwFn,
+
+    #[token("struct")]
+    KwStruct,
 
     #[error]
     Error,
@@ -158,6 +164,7 @@ impl fmt::Display for TokenKind {
 
                 // Keywords
                 TokenKind::KwLet => "let",
+                TokenKind::KwStruct => "struct",
                 TokenKind::KwIf => "if",
                 TokenKind::KwElse => "else",
                 TokenKind::KwFn => "fn",
