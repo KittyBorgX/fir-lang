@@ -1,5 +1,3 @@
-use std::{env, fs};
-
 mod ast;
 mod error;
 mod lexer;
@@ -19,6 +17,7 @@ fn main() {
     let imp = "fn addasdasd(x: String, y: String) {
         let a = lsss
     }";
-    dbg!(parser::Parser::parse(imp));
+    // dbg!(parser::Parser::parse(imp));
+    println!("{:#?}", parser::Parser::parse(imp));
     println!("Hello world");
 }

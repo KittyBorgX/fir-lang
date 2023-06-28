@@ -1,7 +1,4 @@
-use std::process::exit;
-
 use super::Parser;
-use crate::ast::Item;
 use crate::error::Error;
 use crate::lexer::TokenKind;
 use crate::{ast, error};
@@ -16,18 +13,17 @@ impl<'a> Parser<'a> {
         let mut items = Vec::new();
         while !self.at(TokenKind::EOF) {
             let item = self.item();
-            dbg!(item.clone());
+            // dbg!(item.clone());
             items.push(item);
         }
         items
     }
 
     pub fn item(&mut self) -> Result<ast::Item, Error> {
-        dbg!(self.peek());
+        // dbg!(self.peek());
         match self.peek() {
             TokenKind::KwFn => {
-                self.consume(TokenKind::KwFn);
-                println!("here");
+                self.consume(TokenKind::KwFn)?;
                 let mut parameters = Vec::new();
 
                 let ident = self.next().unwrap();
@@ -43,7 +39,7 @@ impl<'a> Parser<'a> {
                 }
                 let name = self.text().to_string();
 
-                self.consume(TokenKind::LParen);
+                self.consume(TokenKind::LParen)?;
                 while !self.at(TokenKind::RParen) {
                     let _parameter_ident = self.next().unwrap();
 
@@ -58,16 +54,15 @@ impl<'a> Parser<'a> {
                         ))
                     }
                     let parameter_name = self.text().to_string();
-                    self.consume(TokenKind::Colon);
+                    self.consume(TokenKind::Colon)?;
                     let parameter_type = self.type_();
                     parameters.push((parameter_name, parameter_type));
                     if self.at(TokenKind::Comma) {
-                        self.consume(TokenKind::Comma);
+                        self.consume(TokenKind::Comma)?;
                     }
                 }
-                println!("here2");
 
-                self.consume(TokenKind::RParen);
+                self.consume(TokenKind::RParen)?;
 
                 assert!(
                     self.at(TokenKind::LBrace),
@@ -77,7 +72,6 @@ impl<'a> Parser<'a> {
                     Ok(ast::Stmt::Block { stmts }) => stmts,
                     _ => unreachable!(),
                 };
-                println!("here3");
 
                 Ok(ast::Item::Function {
                     name,
@@ -86,10 +80,10 @@ impl<'a> Parser<'a> {
                 })
             }
             TokenKind::KwStruct => {
-                self.consume(TokenKind::KwStruct);
+                self.consume(TokenKind::KwStruct)?;
                 let mut members = Vec::new();
                 let name = self.type_();
-                self.consume(TokenKind::LBrace);
+                self.consume(TokenKind::LBrace)?;
                 while !self.at(TokenKind::RBrace) {
                     let member_ident = self.next().unwrap();
                     if member_ident != TokenKind::Ident {
@@ -103,14 +97,14 @@ impl<'a> Parser<'a> {
                         ))
                     }
                     let member_name = self.text().to_string();
-                    self.consume(TokenKind::Colon);
+                    self.consume(TokenKind::Colon)?;
                     let member_type = self.type_();
                     members.push((member_name, member_type));
                     if self.at(TokenKind::Comma) {
-                        self.consume(TokenKind::Comma);
+                        self.consume(TokenKind::Comma)?;
                     }
                 }
-                self.consume(TokenKind::RBrace);
+                self.consume(TokenKind::RBrace)?;
                 Ok(ast::Item::Struct { name, members })
             }
             kind => panic!("Unknown start of item: `{}`", kind),
@@ -135,26 +129,26 @@ impl<'a> Parser<'a> {
         let mut generics = Vec::new();
 
         if self.at(TokenKind::LAngle) {
-            self.consume(TokenKind::LAngle);
+            self.consume(TokenKind::LAngle)?;
             while !self.at(TokenKind::RAngle) {
                 // Generic parameters are also types
                 let generic = self.type_();
                 generics.push(generic);
                 if self.at(TokenKind::Comma) {
-                    self.consume(TokenKind::Comma);
+                    self.consume(TokenKind::Comma)?;
                 }
             }
-            self.consume(TokenKind::RAngle);
+            self.consume(TokenKind::RAngle)?;
         }
 
         Ok(ast::Type { name, generics })
     }
 
     pub fn statement(&mut self) -> Result<ast::Stmt, error::Error> {
-        dbg!(self.peek());
+        // dbg!(self.peek());
         match self.peek() {
             TokenKind::KwLet => {
-                self.consume(TokenKind::KwLet);
+                self.consume(TokenKind::KwLet)?;
                 let ident = self.next().unwrap();
                 if ident != TokenKind::Ident {
                     let err = Error::new(
@@ -166,30 +160,30 @@ impl<'a> Parser<'a> {
                     ast::Stmt::Error(err.clone());
                 }
                 let name = self.text().to_string();
-                self.consume(TokenKind::Eq);
+                self.consume(TokenKind::Eq)?;
                 let value = self.expression();
-                let _ = self.consume(TokenKind::SemiColon);
+                let _ = self.consume(TokenKind::SemiColon)?;
                 Ok(ast::Stmt::Let {
                     var_name: name,
                     value: Box::new(value),
                 })
             }
             TokenKind::Ident => {
-                let ident = self.next().unwrap();
+                let _ident = self.next().unwrap();
                 let name = self.text().to_string();
-                self.consume(TokenKind::Eq);
+                self.consume(TokenKind::Eq)?;
                 let value = self.expression();
-                self.consume(TokenKind::SemiColon);
+                self.consume(TokenKind::SemiColon)?;
                 Ok(ast::Stmt::Assignment {
                     var_name: name,
                     value: Box::new(value),
                 })
             }
             TokenKind::KwIf => {
-                self.consume(TokenKind::KwIf);
-                self.consume(TokenKind::LParen);
+                self.consume(TokenKind::KwIf)?;
+                self.consume(TokenKind::LParen)?;
                 let condition = self.expression();
-                self.consume(TokenKind::RParen);
+                self.consume(TokenKind::RParen)?;
 
                 assert!(
                     self.at(TokenKind::LBrace),
@@ -202,7 +196,7 @@ impl<'a> Parser<'a> {
                 };
 
                 let else_stmt = if self.at(TokenKind::KwElse) {
-                    self.consume(TokenKind::KwElse);
+                    self.consume(TokenKind::KwElse)?;
                     assert!(
                         self.at(TokenKind::KwIf) || self.at(TokenKind::LBrace),
                         "Expected a block or an `if` after `else` statement"
@@ -219,21 +213,17 @@ impl<'a> Parser<'a> {
                 })
             }
             TokenKind::LBrace => {
-                self.consume(TokenKind::LBrace);
+                self.consume(TokenKind::LBrace)?;
                 let mut stmts = Vec::new();
                 while !self.at(TokenKind::RBrace) {
                     let stmt = self.statement();
                     stmts.push(stmt);
                 }
-                self.consume(TokenKind::RBrace);
+                self.consume(TokenKind::RBrace)?;
                 Ok(ast::Stmt::Block { stmts })
             }
 
-            TokenKind::EOF => Err(Error::new(
-                "Hit eof".to_string(),
-                "E069".to_string(),
-                self.span(),
-            )),
+            TokenKind::EOF => panic!("hit eof here"),
 
             kind => Err(Error::new(
                 format!("Unknown start of statement {}", kind),

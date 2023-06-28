@@ -44,15 +44,15 @@ impl<'a> Parser<'a> {
                 } else {
                     //  function call
                     let mut args = Vec::new();
-                    self.consume(TokenKind::LParen);
+                    self.consume(TokenKind::LParen)?;
                     while !self.at(TokenKind::RParen) {
                         let arg = self.parse_expression(0);
                         args.push(arg);
                         if self.at(TokenKind::Comma) {
-                            self.consume(TokenKind::Comma);
+                            self.consume(TokenKind::Comma)?;
                         }
                     }
-                    self.consume(TokenKind::RParen);
+                    self.consume(TokenKind::RParen)?;
                     Ok(ast::Expr::FnCall {
                         fn_name: name,
                         args,
@@ -62,13 +62,13 @@ impl<'a> Parser<'a> {
             TokenKind::LParen => {
                 // There is no AST node for grouped expressions.
                 // Parentheses just influence the tree structure.
-                self.consume(TokenKind::LParen);
+                self.consume(TokenKind::LParen)?;
                 let expr = self.parse_expression(0);
-                self.consume(TokenKind::RParen);
+                self.consume(TokenKind::RParen)?;
                 expr
             }
             op @ TokenKind::Plus | op @ TokenKind::Minus | op @ TokenKind::Bang => {
-                self.consume(op);
+                self.consume(op)?;
                 let ((), right_binding_power) = op.prefix_binding_power();
                 let expr = self.parse_expression(right_binding_power);
                 Ok(ast::Expr::PrefixOp {
@@ -109,7 +109,7 @@ impl<'a> Parser<'a> {
                     break;
                 }
 
-                self.consume(op);
+                self.consume(op)?;
                 // no recursive call here, because we have already parsed our operand `lhs`
                 lhs = Ok(ast::Expr::PostfixOp {
                     op,

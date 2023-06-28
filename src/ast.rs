@@ -39,7 +39,6 @@ pub enum Stmt {
     Block {
         stmts: Vec<Result<Stmt, Error>>,
     },
-    EOF,
 
     Error(Error),
 }

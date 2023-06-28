@@ -1,7 +1,7 @@
-use std::{iter::Peekable, process::exit};
+use std::iter::Peekable;
 mod expr;
 mod stmt;
-use crate::{ast, error::Error, lexer::TokenKind};
+use crate::{error::Error, lexer::TokenKind};
 use logos::{Logos, Span, SpannedIter};
 
 pub struct Parser<'a> {
@@ -66,21 +66,6 @@ impl<'a> Parser<'a> {
             Err(err)
         } else {
             Ok(())
-        }
-    }
-
-    pub fn consume_stmt(&mut self, expected: TokenKind) -> Option<ast::Stmt> {
-        let token = self.next().unwrap();
-        if expected != token {
-            let err = Error::new(
-                format!("Expected to consume {} but got {}", expected, token),
-                "E001".to_string(),
-                self.span(),
-            );
-            self.errors.push(err.clone());
-            Some(ast::Stmt::Error(err.clone()))
-        } else {
-            None
         }
     }
 }
