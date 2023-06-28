@@ -13,7 +13,7 @@ impl<'a> Parser<'a> {
             lit @ TokenKind::Int | lit @ TokenKind::Float | lit @ TokenKind::String => {
                 let literal_text = {
                     // if `peek` is not `TokenKind::EOF]`, then there must be a next token
-                    let _literal_token = self.next();
+                    let _literal_token = self.next().unwrap();
                     self.text()
                 };
                 let lit = match lit {
@@ -35,7 +35,7 @@ impl<'a> Parser<'a> {
             }
             TokenKind::Ident => {
                 let name = {
-                    let _ident_token = self.next();
+                    let _ident_token = self.next().unwrap();
                     self.text().to_string()
                 };
                 if !self.at(TokenKind::LParen) {
@@ -44,15 +44,15 @@ impl<'a> Parser<'a> {
                 } else {
                     //  function call
                     let mut args = Vec::new();
-                    self.consume(TokenKind::LParen);
+                    self.consume::<ast::Expr>(TokenKind::LParen);
                     while !self.at(TokenKind::RParen) {
                         let arg = self.parse_expression(0);
                         args.push(arg);
                         if self.at(TokenKind::Comma) {
-                            self.consume(TokenKind::Comma);
+                            self.consume::<ast::Expr>(TokenKind::Comma);
                         }
                     }
-                    self.consume(TokenKind::RParen);
+                    self.consume::<ast::Expr>(TokenKind::RParen);
                     ast::Expr::FnCall {
                         fn_name: name,
                         args,
@@ -62,13 +62,13 @@ impl<'a> Parser<'a> {
             TokenKind::LParen => {
                 // There is no AST node for grouped expressions.
                 // Parentheses just influence the tree structure.
-                self.consume(TokenKind::LParen);
+                self.consume::<ast::Expr>(TokenKind::LParen);
                 let expr = self.parse_expression(0);
-                self.consume(TokenKind::RParen);
+                self.consume::<ast::Expr>(TokenKind::RParen);
                 expr
             }
             op @ TokenKind::Plus | op @ TokenKind::Minus | op @ TokenKind::Bang => {
-                self.consume(op);
+                self.consume::<ast::Expr>(op);
                 let ((), right_binding_power) = op.prefix_binding_power();
                 let expr = self.parse_expression(right_binding_power);
                 ast::Expr::PrefixOp {
@@ -109,7 +109,7 @@ impl<'a> Parser<'a> {
                     break;
                 }
 
-                self.consume(op);
+                self.consume::<ast::Expr>(op);
                 // no recursive call here, because we have already parsed our operand `lhs`
                 lhs = ast::Expr::PostfixOp {
                     op,
@@ -125,7 +125,7 @@ impl<'a> Parser<'a> {
                     break;
                 }
 
-                self.consume(op);
+                self.consume::<ast::Expr>(op);
                 let rhs = self.parse_expression(right_binding_power);
                 lhs = ast::Expr::InfixOp {
                     op,

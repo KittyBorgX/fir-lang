@@ -17,7 +17,8 @@ fn main() {
     //     println!();
     // }
     let imp = "fn addasdasd(x: String, y: String) {
-        fn hi();
+        let a = lsss
     }";
-    println!("{:#?}", parser::Parser::parse(imp));
+    dbg!(parser::Parser::parse(imp));
+    println!("Hello world");
 }

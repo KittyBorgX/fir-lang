@@ -11,7 +11,7 @@ pub enum Item {
     Function {
         name: String,
         parameters: Vec<(String, Type)>,
-        body: Vec<Stmt>,
+        body: Vec<Result<Stmt, Error>>,
     },
     Error(Error),
 }
@@ -34,12 +34,13 @@ pub enum Stmt {
     },
     IfStmt {
         condition: Box<Expr>,
-        body: Vec<Stmt>,
-        else_stmt: Option<Box<Stmt>>,
+        body: Vec<Result<Stmt, Error>>,
+        else_stmt: Option<Box<Result<Stmt, Error>>>,
     },
     Block {
-        stmts: Vec<Stmt>,
+        stmts: Vec<Result<Stmt, Error>>,
     },
+    EOF,
 
     Error(Error),
 }

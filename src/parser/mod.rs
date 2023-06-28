@@ -1,4 +1,4 @@
-use std::iter::Peekable;
+use std::{iter::Peekable, process::exit};
 mod expr;
 mod stmt;
 use crate::{ast, error::Error, lexer::TokenKind};
@@ -21,13 +21,14 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn next(&mut self) -> TokenKind {
-        let (kind, span) = self
-            .tokenkind
-            .next()
-            .unwrap_or((TokenKind::EOF, self.input.len()..self.input.len()));
-        self.cur_span = span;
-        kind
+    pub fn next(&mut self) -> Option<TokenKind> {
+        let kind = self.tokenkind.next().unwrap();
+        self.cur_span = kind.1;
+        if kind.0 != TokenKind::EOF {
+            return Some(kind.0);
+        } else {
+            None
+        }
     }
 
     pub fn peek(&mut self) -> TokenKind {
@@ -35,7 +36,9 @@ impl<'a> Parser<'a> {
             .tokenkind
             .peek()
             .cloned()
-            .unwrap_or((TokenKind::EOF, self.input.len()..self.input.len()));
+            .unwrap_or((TokenKind::EOF, self.input.len()..1 - self.input.len()));
+        self.cur_span = span;
+
         kind
     }
 
@@ -51,23 +54,23 @@ impl<'a> Parser<'a> {
         &self.input[self.span()]
     }
 
-    pub fn consume(&mut self, expected: TokenKind) -> Result<(), Error> {
-        let token = self.next();
+    pub fn consume<T>(&mut self, expected: TokenKind) -> Result<T, Error> {
+        let token = self.next().unwrap();
         if expected != token {
             let err = Error::new(
-                format!("Expected to consume {} but got {}", expected, token),
+                format!("Expected to consume {} but got {:#?}", expected, token),
                 "E001".to_string(),
                 self.span(),
             );
             self.errors.push(err.clone());
-            return Err(err.clone());
+            Err(err)
         } else {
-            return Ok(());
+            Ok(T)
         }
     }
 
     pub fn consume_stmt(&mut self, expected: TokenKind) -> Option<ast::Stmt> {
-        let token = self.next();
+        let token = self.next().unwrap();
         if expected != token {
             let err = Error::new(
                 format!("Expected to consume {} but got {}", expected, token),
