@@ -19,7 +19,7 @@ Along with the mentioned features, here are some more features which are notable
 - Simple Syntax.
 - Memory safety guarantee (Transpiling to rust).
 - Automatic parallelisation of codeblocks.
-- Healing of errors.
+- Healing of errors (Battle Healer?).
 
 ## Syntax
 
